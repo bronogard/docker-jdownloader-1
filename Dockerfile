@@ -1,36 +1,29 @@
-FROM openjdk:8-jre
-MAINTAINER Dominique Barton
+FROM arm32v6/alpine
 
-#
-# Create user and group for JDownloader.
-#
+LABEL image="docker-pijdownloader" \
+	maintainer="bronogard" \
+	url="https://github.com/bronogard/docker-pijdownloader"
 
-RUN groupadd -r -g 666 jdownloader \
-    && useradd -r -u 666 -g 666 -d /jdownloader -m jdownloader
+WORKDIR /opt/jdownloader
 
-#
-# Add JDownloader init script.
-#
+ARG USER=jdownloader
+ARG GROUP=jdownloader
 
-ADD jdownloader.sh /jdownloader.sh
-RUN chmod 755 /jdownloader.sh
+ENV UID=666 \
+	GID=666
 
-#
-# Download JDownloader.
-#
+RUN export USER=${USER} && export GROUP=${GROUP} && addgroup -g ${GID} ${GROUP} && adduser -D -u ${UID} -G ${GROUP} ${USER} \
+	&& echo http://dl-cdn.alpinelinux.org/alpine/edge/community >> /etc/apk/repositories \
+        && apk update && apk add --no-cache \
+        bash \
+        openjdk8-jre \
+        shadow \
+        && rm -rf /var/cache/apk/archives /var/lib/apk/lists \
+	&& wget http://installer.jdownloader.org/JDownloader.jar
 
-RUN wget -O /jdownloader/JDownloader.jar --progress=bar:force http://installer.jdownloader.org/JDownloader.jar
 
-#
-# Define container settings.
-#
+COPY jdownloader.sh /usr/local/bin
 
-VOLUME ["/jdownloader/cfg", "/media"]
+VOLUME ["/opt/jdownloader/cfg", "/media"]
 
-#
-# Start JDownloader.
-#
-
-WORKDIR /jdownloader
-
-CMD ["/jdownloader.sh"]
+ENTRYPOINT ["jdownloader.sh"]

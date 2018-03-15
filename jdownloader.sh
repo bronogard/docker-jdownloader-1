@@ -1,18 +1,16 @@
 #!/bin/bash
-set -e
 
 #
 # Display settings on standard out.
 #
 
-USER="jdownloader"
-
 echo "JDownloader settings"
 echo "===================="
 echo
-echo "  User:       ${USER}"
-echo "  UID:        ${JDOWNLOADER_UID:=666}"
-echo "  GID:        ${JDOWNLOADER_GID:=666}"
+echo " USER:	${USER}"
+echo " GROUP:	${GROUP}"
+echo " UID:	${UID}"
+echo " GID:	${GID}"
 echo
 
 #
@@ -20,8 +18,8 @@ echo
 #
 
 printf "Updating UID / GID... "
-[[ $(id -u ${USER}) == ${JDOWNLOADER_UID} ]] || usermod  -o -u ${JDOWNLOADER_UID} ${USER}
-[[ $(id -g ${USER}) == ${JDOWNLOADER_GID} ]] || groupmod -o -g ${JDOWNLOADER_GID} ${USER}
+[[ $(id -u ${USER}) == ${UID} ]] || usermod -u ${UID} ${USER}
+[[ $(id -g ${GROUP}) == ${GID} ]] || groupmod -g ${GID} ${GROUP}
 echo "[DONE]"
 
 #
@@ -29,8 +27,8 @@ echo "[DONE]"
 #
 
 printf "Setting permissions... "
-chown -R ${USER}: /jdownloader
-chown ${USER}: /media
+chown -R ${USER}:${GROUP} $(pwd)
+chown ${USER}:${GROUP} /media
 echo "[DONE]"
 
 #
@@ -38,4 +36,4 @@ echo "[DONE]"
 #
 
 echo "Starting JDownloader..."
-exec su -pc "java -Djava.awt.headless=true -jar JDownloader.jar -norestart 2>&1 >/dev/null" ${USER}
+java -Djava.awt.headless=true -jar JDownloader.jar > $(pwd)/logs/startup.log -norestart 2>&1 &
